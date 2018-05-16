@@ -458,7 +458,7 @@ int ext2fs_mark_generic_bmap(ext2fs_generic_bitmap bitmap,
 		warn_bitmap(bitmap, EXT2FS_MARK_ERROR, arg);
 		return 0;
 	}
-
+        // printf("ext2fs_mark_generic_bmap is called.\n");
 	return bitmap->bitmap_ops->mark_bmap(bitmap, arg);
 }
 
@@ -558,6 +558,7 @@ errcode_t ext2fs_get_generic_bmap_range(ext2fs_generic_bitmap bmap,
 					__u64 start, unsigned int num,
 					void *out)
 {
+        //printf("ext2fs_get_generic_bmap_range is called.\n");
 	if (!bmap)
 		return EINVAL;
 
@@ -567,6 +568,7 @@ errcode_t ext2fs_get_generic_bmap_range(ext2fs_generic_bitmap bmap,
 					    EXT2FS_UNMARK_ERROR, 0xffffffff);
 			return EINVAL;
 		}
+                printf("ext2fs_get_generic_bitmap_range is called.\n");
 		return ext2fs_get_generic_bitmap_range(bmap, bmap->magic,
 						       start, num, out);
 	}
@@ -575,7 +577,7 @@ errcode_t ext2fs_get_generic_bmap_range(ext2fs_generic_bitmap bmap,
 		return EINVAL;
 
 	INC_STAT(bmap, get_range_count);
-
+        //printf("get_bmap_range is called.\n");
 	return bmap->bitmap_ops->get_bmap_range(bmap, start, num, out);
 }
 

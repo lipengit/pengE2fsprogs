@@ -29,6 +29,8 @@
 #include "ext2fs.h"
 #include "ext2fsP.h"
 
+blk64_t         metadata_blk = 0; 
+
 /*
  * This routine searches for free blocks that can allocate a full
  * group of bitmaps or inode tables for a flexbg group.  Returns the
@@ -97,6 +99,7 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 
 	if (ext2fs_has_feature_flex_bg(fs->super) &&
 	    fs->super->s_log_groups_per_flex) {
+                // printf("ext2fs_allocate_group_table is called. \n");
 		flexbg_size = 1 << fs->super->s_log_groups_per_flex;
 		last_grp = group | (flexbg_size - 1);
 		if (last_grp > fs->group_desc_count-1)
@@ -108,6 +111,7 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 	 * Allocate the block and inode bitmaps, if necessary
 	 */
 	if (fs->stride && !flexbg_size) {
+                printf("ext2fs_get_free_blocks2 is called for group %d for block and inode bitmaps. \n", group_blk);
 		retval = ext2fs_get_free_blocks2(fs, group_blk, last_blk,
 						 1, bmap, &start_blk);
 		if (retval)
@@ -145,8 +149,18 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 	}
 
 	if (!ext2fs_block_bitmap_loc(fs, group)) {
-		retval = ext2fs_get_free_blocks2(fs, start_blk, last_blk,
-						 1, bmap, &new_blk);
+		//retval = ext2fs_get_free_blocks2(fs, start_blk, last_blk,
+		//				 1, bmap, &new_blk);
+                retval = ext2fs_get_free_blocks2(fs, metadata_blk, metadata_blk + 32767, 1, bmap, &new_blk);
+                if (retval == EXT2_ET_BLOCK_ALLOC_FAIL) {
+                        metadata_blk += 32768;
+                    	retval = ext2fs_get_free_blocks2(fs, metadata_blk,
+					metadata_blk + 32767, 1, bmap, &new_blk);
+                }
+		if (retval)
+			return retval;
+                
+                printf("ext2fs_get_free_blocks2 is called for group %d because block bitmap block is 0, start block %d, last block %d, new block %d. \n", group, start_blk, last_blk, new_blk);
 		if (retval == EXT2_ET_BLOCK_ALLOC_FAIL)
 			retval = ext2fs_get_free_blocks2(fs, group_blk,
 					last_blk, 1, bmap, &new_blk);
@@ -178,8 +192,19 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 	}
 
 	if (!ext2fs_inode_bitmap_loc(fs, group)) {
-		retval = ext2fs_get_free_blocks2(fs, start_blk, last_blk,
-						 1, bmap, &new_blk);
+		//retval = ext2fs_get_free_blocks2(fs, start_blk, last_blk,
+		//				 1, bmap, &new_blk);
+                //retval = ext2fs_get_free_blocks2(fs, 0, 32767, 1, bmap, &new_blk);                
+                retval = ext2fs_get_free_blocks2(fs, metadata_blk, metadata_blk + 32767, 1, bmap, &new_blk);
+                if (retval == EXT2_ET_BLOCK_ALLOC_FAIL) {
+                        metadata_blk += 32768;
+                    	retval = ext2fs_get_free_blocks2(fs, metadata_blk,
+					metadata_blk + 32767, 1, bmap, &new_blk);
+                }
+		if (retval)
+			return retval;                     
+                
+                printf("ext2fs_get_free_blocks2 is called for group %d because inode bitmap block is 0, new block %d. \n", group, new_blk);
 		if (retval == EXT2_ET_BLOCK_ALLOC_FAIL)
 			retval = ext2fs_get_free_blocks2(fs, group_blk,
 					 last_blk, 1, bmap, &new_blk);
@@ -217,9 +242,22 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 	}
 
 	if (!ext2fs_inode_table_loc(fs, group)) {
+                // We will allocate inode table blocks within each group. 
 		retval = ext2fs_get_free_blocks2(fs, group_blk, last_blk,
 						fs->inode_blocks_per_group,
 						bmap, &new_blk);
+            
+                // We will allocate inode table blocks using the metadata group in IMB. 
+                /*
+                retval = ext2fs_get_free_blocks2(fs, metadata_blk, metadata_blk + 32767, fs->inode_blocks_per_group, bmap, &new_blk);
+                if (retval == EXT2_ET_BLOCK_ALLOC_FAIL) {
+                        metadata_blk += 32768;
+                    	retval = ext2fs_get_free_blocks2(fs, metadata_blk,
+					metadata_blk + 32767, fs->inode_blocks_per_group, bmap, &new_blk);
+                }
+                */
+            
+                printf("ext2fs_get_free_blocks2 is called for group %d because inode table block is 0. new block %d. \n", group, new_blk);
 		if (retval)
 			return retval;
 
@@ -259,7 +297,7 @@ errcode_t ext2fs_allocate_tables(ext2_filsys fs)
 	errcode_t	retval;
 	dgrp_t		i;
 	struct ext2fs_numeric_progress_struct progress;
-
+        //printf("ext2fs_allocate_tables is called. \n");
 	if (fs->progress_ops && fs->progress_ops->init)
 		(fs->progress_ops->init)(fs, &progress, NULL,
 					 fs->group_desc_count);

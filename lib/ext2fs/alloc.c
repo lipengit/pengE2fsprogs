@@ -285,7 +285,7 @@ errcode_t ext2fs_get_free_blocks2(ext2_filsys fs, blk64_t start, blk64_t finish,
 {
 	blk64_t	b = start;
 	int	c_ratio;
-
+        //printf("ext2fs_get_free_blocks2 is called for start block %d. \n", start);
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
 	if (!map)

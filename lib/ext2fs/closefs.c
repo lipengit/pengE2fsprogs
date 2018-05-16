@@ -80,19 +80,26 @@ errcode_t ext2fs_super_and_bgd_loc2(ext2_filsys fs,
 	blk_t	numblocks = 0;
 	blk64_t old_desc_blocks;
 	int	has_super;
-
+          
 	group_block = ext2fs_group_first_block2(fs, group);
+        //printf("ext2fs_super_and_bgd_loc2 is called. group %d has group blocks %d.\n", group, group_block);
 	if (group_block == 0 && fs->blocksize == 1024)
 		group_block = 1; /* Deal with 1024 blocksize && bigalloc */
 
 	if (ext2fs_has_feature_meta_bg(fs->super))
+        {
 		old_desc_blocks = fs->super->s_first_meta_bg;
+                printf("ext2fs_super_and_bgd_loc2 is called. ext2fs has feature meta bg, old desc blocks %d.\n", old_desc_blocks);
+        }
 	else
+        {
 		old_desc_blocks =
 			fs->desc_blocks + fs->super->s_reserved_gdt_blocks;
-
+                //printf("ext2fs_super_and_bgd_loc2 is called. ext2fs has not feature meta bg, reserved gdt blocks %d, old desc blocks %d.\n", fs->super->s_reserved_gdt_blocks, old_desc_blocks);
+        }
+        
 	has_super = ext2fs_bg_has_super(fs, group);
-
+        //printf("ext2fs_super_and_bgd_loc2 is called. group %d has super %d.\n", group, has_super);
 	if (has_super) {
 		super_blk = group_block;
 		numblocks++;
@@ -104,6 +111,7 @@ errcode_t ext2fs_super_and_bgd_loc2(ext2_filsys fs,
 	    (meta_bg < fs->super->s_first_meta_bg)) {
 		if (has_super) {
 			old_desc_blk = group_block + 1;
+                        //printf("ext2fs_super_and_bgd_loc2 is called. group %d has group block %d, old desc blocks %d.\n", group, group_block, old_desc_blocks);
 			numblocks += old_desc_blocks;
 		}
 	} else {

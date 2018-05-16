@@ -295,6 +295,7 @@ static errcode_t ba_set_bmap_range(ext2fs_generic_bitmap bitmap,
 static errcode_t ba_get_bmap_range(ext2fs_generic_bitmap bitmap,
 				     __u64 start, size_t num, void *out)
 {
+        printf("ba_get_bmap_range is called.\n");
 	ext2fs_ba_private bp = (ext2fs_ba_private) bitmap->private;
 
 	memcpy (out, bp->bitarray + (start >> 3), (num + 7) >> 3);

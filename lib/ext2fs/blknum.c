@@ -235,6 +235,7 @@ void ext2fs_block_bitmap_loc_set(ext2_filsys fs, dgrp_t group, blk64_t blk)
 
 	gdp = ext4fs_group_desc(fs, fs->group_desc, group);
 	gdp->bg_block_bitmap = blk;
+        //printf("ext2fs_block_bitmap_loc_set, block bitmap in group %d is set to block %d.\n", group, blk);
 	if (ext2fs_has_feature_64bit(fs->super))
 		gdp->bg_block_bitmap_hi = (__u64) blk >> 32;
 }

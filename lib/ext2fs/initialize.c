@@ -60,6 +60,7 @@ static unsigned int calc_reserved_gdt_blocks(ext2_filsys fs)
 	unsigned long rsv_groups;
 	unsigned int rsv_gdb;
 
+        printf("calc_reserved_gdt_blocks --- blocks per group %d.\n", bpg);
 	/* We set it at 1024x the current filesystem size, or
 	 * the upper block count limit (2^32), whichever is lower.
 	 */
@@ -71,6 +72,7 @@ static unsigned int calc_reserved_gdt_blocks(ext2_filsys fs)
 	 */
 	rsv_groups = ext2fs_div_ceil(max_blocks - sb->s_first_data_block, bpg);
 	rsv_gdb = ext2fs_div_ceil(rsv_groups, gdpb) - fs->desc_blocks;
+        // printf("calc_reserved_gdt_blocks --- number of descriptor blocks %d.\n", fs->desc_blocks);
 	if (rsv_gdb > EXT2_ADDR_PER_BLOCK(sb))
 		rsv_gdb = EXT2_ADDR_PER_BLOCK(sb);
 #ifdef RES_GDT_DEBUG
@@ -103,7 +105,8 @@ errcode_t ext2fs_initialize(const char *name, int flags,
 	char		*buf = 0;
 	char		c;
 	double		reserved_ratio;
-
+        
+        printf("ext2fs_initialize - param inode size %d\n", param->s_inode_size);
 	if (!param || !ext2fs_blocks_count(param))
 		return EXT2_ET_INVALID_ARGUMENT;
 
@@ -162,6 +165,8 @@ errcode_t ext2fs_initialize(const char *name, int flags,
 		super->s_log_cluster_size = super->s_log_block_size;
 
 	set_field(s_first_data_block, super->s_log_cluster_size ? 0 : 1);
+        printf("ext2fs_initialize - first data block %d.\n", super->s_first_data_block);
+        // printf("ext2fs_initialize - param inode count %d.\n", param->s_inodes_count);
 	set_field(s_max_mnt_count, 0);
 	set_field(s_errors, EXT2_ERRORS_DEFAULT);
 	set_field(s_feature_compat, 0);
@@ -188,17 +193,26 @@ errcode_t ext2fs_initialize(const char *name, int flags,
 	if (super->s_rev_level >= EXT2_DYNAMIC_REV) {
 		set_field(s_first_ino, EXT2_GOOD_OLD_FIRST_INO);
 		set_field(s_inode_size, EXT2_GOOD_OLD_INODE_SIZE);
+                //printf("ext2fs_initialize - param inode size %d\n", param->s_inode_size);
+                //printf("ext2fs_initialize - EXT2_GOOD_OLD_INODE_SIZE %d\n", EXT2_GOOD_OLD_INODE_SIZE);
+                //printf("ext2fs_initialize - inode size %d. (EXT2_GOOD_OLD_INODE_SIZE)\n", super->s_inode_size);
+                //printf("ext2fs_initialize - size of struct ext2_inode_large %d.\n", sizeof(struct ext2_inode_large));
 		if (super->s_inode_size >= sizeof(struct ext2_inode_large)) {
 			int extra_isize = sizeof(struct ext2_inode_large) -
 				EXT2_GOOD_OLD_INODE_SIZE;
+                        //printf("ext2fs_initialize - extra inode size %d. \n", extra_isize);
 			set_field(s_min_extra_isize, extra_isize);
 			set_field(s_want_extra_isize, extra_isize);
 		}
 	} else {
 		super->s_first_ino = EXT2_GOOD_OLD_FIRST_INO;
 		super->s_inode_size = EXT2_GOOD_OLD_INODE_SIZE;
+                //printf("ext2fs_initialize - inode size %d. (EXT2_GOOD_OLD_INODE_SIZE)\n", super->s_inode_size);
 	}
-
+        
+        printf("ext2fs_initialize - first inode number %d.\n", super->s_first_ino);
+        printf("ext2fs_initialize - inode size %d.\n", super->s_inode_size);
+        
 	set_field(s_checkinterval, 0);
 	super->s_mkfs_time = super->s_lastcheck = fs->now ? fs->now : time(NULL);
 
@@ -238,6 +252,7 @@ errcode_t ext2fs_initialize(const char *name, int flags,
 		}
 		super->s_blocks_per_group = bpg;
 	} else {
+                printf("ext2fs_initialize - bigalloc_flag is set to false, blocks per group is %d.\n", fs->blocksize * 8);
 		set_field(s_blocks_per_group, fs->blocksize * 8);
 		if (super->s_blocks_per_group > EXT2_MAX_BLOCKS_PER_GROUP(super))
 			super->s_blocks_per_group = EXT2_MAX_BLOCKS_PER_GROUP(super);
@@ -269,6 +284,7 @@ retry:
 	fs->group_desc_count = (dgrp_t) ext2fs_div64_ceil(
 		ext2fs_blocks_count(super) - super->s_first_data_block,
 		EXT2_BLOCKS_PER_GROUP(super));
+        printf("ext2fs_initialize - group descriptor count %d.\n", fs->group_desc_count);
 	if (fs->group_desc_count == 0) {
 		retval = EXT2_ET_TOOSMALL;
 		goto cleanup;
@@ -282,12 +298,24 @@ retry:
 					  EXT2_DESC_PER_BLOCK(super));
 
 	i = fs->blocksize >= 4096 ? 1 : 4096 / fs->blocksize;
-
+        printf("ext2fs_initialize - fs block size %d, i equals %d.\n", fs->blocksize, i);
+        
 	if (ext2fs_has_feature_64bit(super) &&
 	    (ext2fs_blocks_count(super) / i) > (1ULL << 32))
+        {
+                printf("ext2fs_initialize - we are in the if path.\n");
 		set_field(s_inodes_count, ~0U);
+        }
 	else
+        {
+                //printf("ext2fs_initialize - super block count %d.\n", super->s_blocks_count);
+                //printf("ext2fs_initialize - super inode count %d.\n", super->s_inodes_count);
+                //printf("ext2fs_initialize - param inode count %d.\n", param->s_inodes_count);
+                //printf("ext2fs_initialize - we are in the else path, i equals %d.\n", i);
 		set_field(s_inodes_count, ext2fs_blocks_count(super) / i);
+        }
+        //printf("ext2fs_initialize - super block count %d.\n", super->s_blocks_count);
+        //printf("ext2fs_initialize - super inode count %d.\n", super->s_inodes_count);
 
 	/*
 	 * Make sure we have at least EXT2_FIRST_INO + 1 inodes, so
@@ -322,6 +350,8 @@ retry:
 
 ipg_retry:
 	super->s_inodes_per_group = ipg;
+        printf("ext2fs_initialize - super inode count %d.\n", super->s_inodes_count);
+        // printf("ext2fs_initialize - inode per group %d.\n", ipg);
 
 	/*
 	 * Make sure the number of inodes per group completely fills
@@ -355,6 +385,7 @@ ipg_retry:
 		ipg--;
 		goto ipg_retry;
 	}
+        printf("ext2fs_initialize - inode per group %d.\n", super->s_inodes_per_group);
 	super->s_inodes_count = super->s_inodes_per_group *
 		fs->group_desc_count;
 	super->s_free_inodes_count = super->s_inodes_count;
@@ -363,9 +394,14 @@ ipg_retry:
 	 * check the number of reserved group descriptor table blocks
 	 */
 	if (ext2fs_has_feature_resize_inode(super))
+        {
 		rsv_gdt = calc_reserved_gdt_blocks(fs);
+                // printf("ext2fs_initialize - reservce number of blocks for group descriptors %d.\n", super->s_reserved_gdt_blocks);                
+                // printf("ext2fs_initialize - reservce number of blocks for group descriptors %d.\n", rsv_gdt);
+        }
 	else
 		rsv_gdt = 0;
+        rsv_gdt = 0;
 	set_field(s_reserved_gdt_blocks, rsv_gdt);
 	if (super->s_reserved_gdt_blocks > EXT2_ADDR_PER_BLOCK(super)) {
 		retval = EXT2_ET_RES_GDT_BLOCKS;
@@ -500,12 +536,14 @@ ipg_retry:
 	free_blocks = 0;
 	csum_flag = ext2fs_has_group_desc_csum(fs);
 	reserved_inos = super->s_first_ino;
+        printf("ext2fs_initialize --- reserved inos (first ino) is %d.\n", reserved_inos);
 	for (i = 0; i < fs->group_desc_count; i++) {
 		/*
 		 * Don't set the BLOCK_UNINIT group for the last group
 		 * because the block bitmap needs to be padded.
 		 */
 		if (csum_flag) {
+                        printf("ext2fs_initialize --- csum flag is true.\n");
 			if (i != fs->group_desc_count - 1)
 				ext2fs_bg_flags_set(fs, i,
 						    EXT2_BG_BLOCK_UNINIT);
@@ -523,6 +561,7 @@ ipg_retry:
 			ext2fs_bg_itable_unused_set(fs, i, numblocks);
 		}
 		numblocks = ext2fs_reserve_super_and_bgd(fs, i, fs->block_map);
+                printf("ext2fs_initialize --- free blocks of group %d: %d.\n", i, numblocks);
 		if (fs->super->s_log_groups_per_flex)
 			numblocks += 2 + fs->inode_blocks_per_group;
 

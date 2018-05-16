@@ -40,7 +40,7 @@ static errcode_t write_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 	blk64_t		blk;
 	blk64_t		blk_itr = EXT2FS_B2C(fs, fs->super->s_first_data_block);
 	ext2_ino_t	ino_itr = 1;
-
+        printf("write_bitmaps is called, do inode %d, do block %d. \n", do_inode, do_block);
 	EXT2_CHECK_MAGIC(fs, EXT2_ET_MAGIC_EXT2FS_FILSYS);
 
 	if (!(fs->flags & EXT2_FLAG_RW))
@@ -64,17 +64,26 @@ static errcode_t write_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 			goto errout;
 		memset(inode_buf, 0xff, fs->blocksize);
 	}
+        printf("write_bitmaps is called, inode nbytes %d, block nbytes %d. \n", inode_nbytes, block_nbytes);
 
 	for (i = 0; i < fs->group_desc_count; i++) {
 		if (!do_block)
 			goto skip_block_bitmap;
 
-		if (csum_flag && ext2fs_bg_flags_test(fs, i, EXT2_BG_BLOCK_UNINIT)
-		    )
-			goto skip_this_block_bitmap;
+		if (csum_flag && ext2fs_bg_flags_test(fs, i, EXT2_BG_BLOCK_UNINIT))
+                {
+                    printf("write_bitmaps is called, skipped block %d bitmap.\n", i);
+                    goto skip_this_block_bitmap;
+                }
 
 		retval = ext2fs_get_block_bitmap_range2(fs->block_map,
 				blk_itr, block_nbytes << 3, block_buf);
+                //printf("write_bitmaps is called, block buf %x. \n", (unsigned int *) block_buf[0]);
+                //printf("write_bitmaps is called, block buf %x. \n", (unsigned int *) block_buf[4]);
+                //printf("write_bitmaps is called, block buf %x. \n", (unsigned int *) block_buf[8]);
+                //printf("write_bitmaps is called, block buf %x. \n", (unsigned int *) block_buf[12]);
+                // printf("write_bitmaps is called, block buf %x. \n", (unsigned int *) block_buf[16]);
+                
 		if (retval)
 			goto errout;
 
@@ -97,6 +106,7 @@ static errcode_t write_bitmaps(ext2_filsys fs, int do_inode, int do_block)
 		fs->flags |= EXT2_FLAG_DIRTY;
 
 		blk = ext2fs_block_bitmap_loc(fs, i);
+                printf("write_bitmaps is called, block bitmap location for group %d is %d. \n", i, blk);
 		if (blk) {
 			retval = io_channel_write_blk64(fs->io, blk, 1,
 							block_buf);
@@ -404,11 +414,13 @@ errcode_t ext2fs_read_block_bitmap(ext2_filsys fs)
 
 errcode_t ext2fs_write_inode_bitmap(ext2_filsys fs)
 {
+        printf("ext2fs_write_inode_bitmaps is called.\n");
 	return write_bitmaps(fs, 1, 0);
 }
 
 errcode_t ext2fs_write_block_bitmap (ext2_filsys fs)
 {
+        printf("ext2fs_write_block_bitmaps is called.\n");
 	return write_bitmaps(fs, 0, 1);
 }
 
@@ -422,6 +434,7 @@ errcode_t ext2fs_read_bitmaps(ext2_filsys fs)
 
 errcode_t ext2fs_write_bitmaps(ext2_filsys fs)
 {
+        printf("ext2fs_write_bitmaps is called.\n");
 	int do_inode = fs->inode_map && ext2fs_test_ib_dirty(fs);
 	int do_block = fs->block_map && ext2fs_test_bb_dirty(fs);
 

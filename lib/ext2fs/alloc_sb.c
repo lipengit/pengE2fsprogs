@@ -51,7 +51,7 @@ int ext2fs_reserve_super_and_bgd(ext2_filsys fs,
 
 	ext2fs_super_and_bgd_loc2(fs, group, &super_blk,
 				  &old_desc_blk, &new_desc_blk, &used_blks);
-
+        printf("ext2fs_reserve_super_and_bgd is called, used blocks for group %d is %d.\n", group, used_blks);
 	if (ext2fs_has_feature_meta_bg(fs->super))
 		old_desc_blocks = fs->super->s_first_meta_bg;
 	else
@@ -65,17 +65,21 @@ int ext2fs_reserve_super_and_bgd(ext2_filsys fs,
 		ext2fs_mark_block_bitmap2(bmap, 0);
 
 	if (old_desc_blk) {
+                //printf("ext2fs_reserve_super_and_bgd is called, old desc blocks for group %d is %d.\n", group, old_desc_blk);
 		num_blocks = old_desc_blocks;
 		if (old_desc_blk + num_blocks >= ext2fs_blocks_count(fs->super))
 			num_blocks = ext2fs_blocks_count(fs->super) -
 				old_desc_blk;
 		ext2fs_mark_block_bitmap_range2(bmap, old_desc_blk, num_blocks);
 	}
-	if (new_desc_blk)
+	if (new_desc_blk) {
+                //printf("ext2fs_reserve_super_and_bgd is called, new desc blocks for group %d is %d.\n", group, new_desc_blk);
 		ext2fs_mark_block_bitmap2(bmap, new_desc_blk);
-
+        }
 	num_blocks = ext2fs_group_blocks_count(fs, group);
-	num_blocks -= 2 + fs->inode_blocks_per_group + used_blks;
-
+        //printf("ext2fs_reserve_super_and_bgd is called, number of blocks for group %d before reduction is %d, inode blocks per group is %d.\n", group, num_blocks, fs->inode_blocks_per_group);
+	//num_blocks -= 2 + fs->inode_blocks_per_group + used_blks;
+        num_blocks -= used_blks;
+        
 	return num_blocks  ;
 }

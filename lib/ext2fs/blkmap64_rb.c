@@ -152,7 +152,7 @@ static void rb_get_new_extent(struct bmap_rb_extent **ext, __u64 start,
 				&new_ext);
 	if (retval)
 		abort();
-
+        //printf("rb_get_new_extent is called, start %d, count %d.\n", start, count);
 	new_ext->start = start;
 	new_ext->count = count;
 	*ext = new_ext;
@@ -390,7 +390,7 @@ static int rb_insert_extent(__u64 start, __u64 count,
 	struct bmap_rb_extent *new_ext;
 	struct bmap_rb_extent *ext;
 	int retval = 0;
-
+        //printf("rb_insert_extent is called, start %d, count %d.\n", start, count);
 	bp->rcursor_next = NULL;
 	ext = bp->wcursor;
 	if (ext) {
@@ -570,7 +570,7 @@ static int rb_mark_bmap(ext2fs_generic_bitmap bitmap, __u64 arg)
 {
 	struct ext2fs_rb_private *bp;
 	int retval;
-
+        //printf("rb_mark_bmap is called.\n");
 	bp = (struct ext2fs_rb_private *) bitmap->private;
 	arg -= bitmap->start;
 
@@ -608,7 +608,7 @@ static void rb_mark_bmap_extent(ext2fs_generic_bitmap bitmap, __u64 arg,
 				unsigned int num)
 {
 	struct ext2fs_rb_private *bp;
-
+        //printf("rb_mark_bmap_extent is called.\n");
 	bp = (struct ext2fs_rb_private *) bitmap->private;
 	arg -= bitmap->start;
 
@@ -691,7 +691,7 @@ static errcode_t rb_set_bmap_range(ext2fs_generic_bitmap bitmap,
 	unsigned char *cp = in;
 	size_t i;
 	int first_set = -1;
-
+        printf("rb_set_bmap_range is called.\n");
 	bp = (struct ext2fs_rb_private *) bitmap->private;
 
 	for (i = 0; i < num; i++) {
@@ -738,7 +738,7 @@ static errcode_t rb_get_bmap_range(ext2fs_generic_bitmap bitmap,
 	struct ext2fs_rb_private *bp;
 	struct bmap_rb_extent *ext;
 	__u64 count, pos;
-
+        //printf("rb_get_bmap_range is called.\n");
 	bp = (struct ext2fs_rb_private *) bitmap->private;
 	n = &bp->root.rb_node;
 	start -= bitmap->start;
@@ -781,7 +781,7 @@ static errcode_t rb_get_bmap_range(ext2fs_generic_bitmap bitmap,
 			    ((pos - start) % 8) == 0) {
 				int nbytes = count >> 3;
 				int offset = (pos - start) >> 3;
-
+                                //printf("memset out by count %d, %d bytes.\n", count, nbytes);
 				memset(((char *) out) + offset, 0xFF, nbytes);
 				pos += nbytes << 3;
 				count -= nbytes << 3;
