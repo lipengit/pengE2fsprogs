@@ -243,19 +243,18 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 
 	if (!ext2fs_inode_table_loc(fs, group)) {
                 // We will allocate inode table blocks within each group. 
-		retval = ext2fs_get_free_blocks2(fs, group_blk, last_blk,
-						fs->inode_blocks_per_group,
-						bmap, &new_blk);
+            
+		// retval = ext2fs_get_free_blocks2(fs, group_blk, last_blk, fs->inode_blocks_per_group, bmap, &new_blk);
             
                 // We will allocate inode table blocks using the metadata group in IMB. 
-                /*
+                
                 retval = ext2fs_get_free_blocks2(fs, metadata_blk, metadata_blk + 32767, fs->inode_blocks_per_group, bmap, &new_blk);
                 if (retval == EXT2_ET_BLOCK_ALLOC_FAIL) {
                         metadata_blk += 32768;
                     	retval = ext2fs_get_free_blocks2(fs, metadata_blk,
 					metadata_blk + 32767, fs->inode_blocks_per_group, bmap, &new_blk);
                 }
-                */
+                
             
                 printf("ext2fs_get_free_blocks2 is called for group %d because inode table block is 0. new block %d. \n", group, new_blk);
 		if (retval)
