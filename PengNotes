@@ -1,0 +1,16 @@
+Test Command: 
+pengE2fsprogs/misc
+
+=== 10 groups ===
+sudo ./mke2fs -b 4096 /dev/nvme1n1 327680 -t ext2
+
+=== 64 groups ===
+sudo ./mke2fs -b 4096 /dev/nvme1n1 2097152 -t ext2
+
+=== number of groups close enough to 2TB===
+sudo ./mke2fs -b 4096 /dev/nvme1n1 524288000 -t ext2
+
+
+===To Read an LBA by using NVMe Cli===
+sudo nvme read /dev/nvme1n1 -s 3920 -c 7 -z 4096 -d LBA3920
+

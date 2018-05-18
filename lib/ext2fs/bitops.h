@@ -511,6 +511,7 @@ _INLINE_ void ext2fs_fast_unmark_block_bitmap_range(ext2fs_block_bitmap bitmap,
 _INLINE_ int ext2fs_mark_block_bitmap2(ext2fs_block_bitmap bitmap,
 				       blk64_t block)
 {
+        //printf("ext2fs_mark_block_bitmap2 is called for block %d.\n", block);
 	return ext2fs_mark_generic_bmap((ext2fs_generic_bitmap) bitmap,
 					block);
 }

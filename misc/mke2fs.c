@@ -406,7 +406,7 @@ static void write_inode_tables(ext2_filsys fs, int lazy_flag, int itable_zeroed)
 	dgrp_t		i;
 	int		num;
 	struct ext2fs_numeric_progress_struct progress;
-
+        //printf("write_inode_tables is called. \n");
 	ext2fs_numeric_progress_init(fs, &progress,
 				     _("Writing inode tables: "),
 				     fs->group_desc_count);
@@ -1492,6 +1492,8 @@ static void PRS(int argc, char *argv[])
 	int		use_bsize;
 	char		*newpath;
 	int		pathlen = sizeof(PATH_SET) + 1;
+        
+        printf("Parsing arguments.\n");
 
 	if (oldpath)
 		pathlen += strlen(oldpath);
@@ -2027,6 +2029,8 @@ profile_error:
 
 	/* Get the hardware sector sizes, if available */
 	retval = ext2fs_get_device_sectsize(device_name, &lsector_size);
+        // printf("PRS --- hardware sector size %d.\n", lsector_size);
+        // printf("PRS --- param inode count %d.\n", fs_param.s_inodes_count);
 	if (retval) {
 		com_err(program_name, retval, "%s",
 			_("while trying to determine hardware sector size"));
@@ -2189,8 +2193,10 @@ profile_error:
 			       "filesystem.  Pass -O extents to rectify.\n"));
 		exit(1);
 	}
-
-	/* Set first meta blockgroup via an environment variable */
+        
+        // printf("PRS --- param inode count %d.\n", fs_param.s_inodes_count);
+	
+        /* Set first meta blockgroup via an environment variable */
 	/* (this is mostly for debugging purposes) */
 	if (ext2fs_has_feature_meta_bg(&fs_param) &&
 	    (tmp = getenv("MKE2FS_FIRST_META_BG")))
@@ -2225,6 +2231,7 @@ profile_error:
 		if (inode_ratio < EXT2_CLUSTER_SIZE(&fs_param))
 			inode_ratio = EXT2_CLUSTER_SIZE(&fs_param);
 	}
+        printf("PRS --- inode ratio %d.\n", inode_ratio);
 
 #ifdef HAVE_BLKID_PROBE_GET_TOPOLOGY
 	retval = get_device_geometry(device_name, &fs_param,
@@ -2413,6 +2420,7 @@ profile_error:
 
 	if (inode_size == 0)
 		inode_size = get_int_from_profile(fs_types, "inode_size", 0);
+        //printf("PRS - indoe size is %d.\n", inode_size);
 	if (!flex_bg_size && ext2fs_has_feature_flex_bg(&fs_param))
 		flex_bg_size = get_uint_from_profile(fs_types,
 						     "flex_bg_size", 16);
@@ -2437,6 +2445,7 @@ profile_error:
 			exit(1);
 		}
 		fs_param.s_inode_size = inode_size;
+                //printf("PRS - fs param indoe size is %d.\n", fs_param.s_inode_size);
 	}
 
 	/*
@@ -2807,15 +2816,19 @@ int main (int argc, char *argv[])
 	char		*hash_alg_str;
 	int		itable_zeroed = 0;
 
+        printf("This is Peng local version of mkefs test\n");
+        
 #ifdef ENABLE_NLS
+        printf("ENABLE NLS is defined.\n");
 	setlocale(LC_MESSAGES, "");
 	setlocale(LC_CTYPE, "");
 	bindtextdomain(NLS_CAT_NAME, LOCALEDIR);
 	textdomain(NLS_CAT_NAME);
 	set_com_err_gettext(gettext);
 #endif
+        // printf("main - param inode count before parse %d.\n", fs_param.s_inodes_count);
 	PRS(argc, argv);
-
+        // printf("main - param inode count after parse %d.\n", fs_param.s_inodes_count);
 #ifdef CONFIG_TESTIO_DEBUG
 	if (getenv("TEST_IO_FLAGS") || getenv("TEST_IO_BLOCK")) {
 		io_ptr = test_io_manager;
@@ -2860,8 +2873,12 @@ int main (int argc, char *argv[])
 		retval = ext2fs_initialize(android_sparse_params, flags,
 					   &fs_param, sparse_io_manager, &fs);
 	} else
+        {
+                printf("Enter the else path for ext2fs initialize. \n");
 		retval = ext2fs_initialize(device_name, flags, &fs_param,
 					   io_ptr, &fs);
+        }
+        
 	if (retval) {
 		com_err(device_name, retval, "%s",
 			_("while setting up superblock"));
@@ -3081,6 +3098,7 @@ int main (int argc, char *argv[])
 		retval = packed_allocate_tables(fs);
 	else
 		retval = ext2fs_allocate_tables(fs);
+        //exit(1);
 	if (retval) {
 		com_err(program_name, retval, "%s",
 			_("while trying to allocate filesystem tables"));
@@ -3122,9 +3140,10 @@ int main (int argc, char *argv[])
 		blk64_t ret_blk;
 
 #ifdef ZAP_BOOTBLOCK
+                printf("zap_sector is called\n");
 		zap_sector(fs, 0, 2);
 #endif
-
+                // exit(1);
 		/*
 		 * Wipe out any old MD RAID (or other) metadata at the end
 		 * of the device.  This will also verify that the device is
@@ -3142,6 +3161,7 @@ int main (int argc, char *argv[])
 				_("while zeroing block %llu at end of filesystem"),
 				ret_blk);
 		}
+                printf("write_inode_tables is called. \n");
 		write_inode_tables(fs, lazy_itable_init, itable_zeroed);
 		create_root_dir(fs);
 		create_lost_and_found(fs);
@@ -3157,8 +3177,9 @@ int main (int argc, char *argv[])
 			}
 		}
 	}
-
+        //exit(1);
 	if (journal_device) {
+                printf("This is a journal device.\n");
 		ext2_filsys	jfs;
 
 		if (!check_plausibility(journal_device, CHECK_BLOCK_DEV,
@@ -3220,6 +3241,7 @@ int main (int argc, char *argv[])
 			printf("%s", _("done\n"));
 	}
 no_journal:
+        printf("This is NOT a journal device.\n");                    
 	if (!super_only &&
 	    ext2fs_has_feature_mmp(fs->super)) {
 		retval = ext2fs_mmp_init(fs);
@@ -3263,7 +3285,9 @@ no_journal:
 		       "filesystem accounting information: "));
 	checkinterval = fs->super->s_checkinterval;
 	max_mnt_count = fs->super->s_max_mnt_count;
+        
 	retval = ext2fs_close_free(&fs);
+        //exit(1);
 	if (retval) {
 		fprintf(stderr, "%s",
 			_("\nWarning, had trouble writing out superblocks.\n"));
