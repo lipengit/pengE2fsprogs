@@ -169,11 +169,13 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 		ext2fs_mark_block_bitmap2(bmap, new_blk);
 		ext2fs_block_bitmap_loc_set(fs, group, new_blk);
 		if (flexbg_size) {
+                        // printf("flexbg_size is true in block bitmap branch.\n"); 
 			dgrp_t gr = ext2fs_group_of_blk2(fs, new_blk);
 			ext2fs_bg_free_blocks_count_set(fs, gr, ext2fs_bg_free_blocks_count(fs, gr) - 1);
 			ext2fs_free_blocks_count_add(fs->super, -1);
 			ext2fs_bg_flags_clear(fs, gr, EXT2_BG_BLOCK_UNINIT);
 			ext2fs_group_desc_csum_set(fs, gr);
+                        // printf("Group %d current free block %d.\n", gr, ext2fs_bg_free_blocks_count(fs, gr));
 		}
 	}
 
@@ -213,11 +215,13 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 		ext2fs_mark_block_bitmap2(bmap, new_blk);
 		ext2fs_inode_bitmap_loc_set(fs, group, new_blk);
 		if (flexbg_size) {
+                        // printf("flexbg_size is true in inode bitmap branch.\n"); 
 			dgrp_t gr = ext2fs_group_of_blk2(fs, new_blk);
 			ext2fs_bg_free_blocks_count_set(fs, gr, ext2fs_bg_free_blocks_count(fs, gr) - 1);
 			ext2fs_free_blocks_count_add(fs->super, -1);
 			ext2fs_bg_flags_clear(fs, gr, EXT2_BG_BLOCK_UNINIT);
 			ext2fs_group_desc_csum_set(fs, gr);
+                        // printf("Group %d current free block %d.\n", gr, ext2fs_bg_free_blocks_count(fs, gr));
 		}
 	}
 
@@ -263,6 +267,7 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 		ext2fs_mark_block_bitmap_range2(bmap,
 			new_blk, fs->inode_blocks_per_group);
 		if (flexbg_size) {
+                        //printf("flexbg_size is true in inode table branch.\n"); 
 			blk64_t num, blk;
 			num = fs->inode_blocks_per_group;
 			blk = new_blk;
@@ -283,11 +288,13 @@ errcode_t ext2fs_allocate_group_table(ext2_filsys fs, dgrp_t group,
 				ext2fs_free_blocks_count_add(fs->super, -n);
 				blk += n;
 				num -= n;
+                                // printf("Group %d current free block %d.\n", gr, ext2fs_bg_free_blocks_count(fs, gr));
 			}
 		}
 		ext2fs_inode_table_loc_set(fs, group, new_blk);
 	}
 	ext2fs_group_desc_csum_set(fs, group);
+        // printf("ext2fs_allocate_group_table --- free block of group %d is %d.\n", group, ext2fs_bg_free_blocks_count(fs, group));
 	return 0;
 }
 

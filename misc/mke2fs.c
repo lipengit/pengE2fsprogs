@@ -2878,6 +2878,9 @@ int main (int argc, char *argv[])
 		retval = ext2fs_initialize(device_name, flags, &fs_param,
 					   io_ptr, &fs);
         }
+
+        // free blocks check 
+        // printf("Group 0 current free block %d.\n", ext2fs_bg_free_blocks_count(fs, 0));
         
 	if (retval) {
 		com_err(device_name, retval, "%s",
@@ -3091,6 +3094,9 @@ int main (int argc, char *argv[])
 	handle_bad_blocks(fs, bb_list);
 
 	fs->stride = fs_stride = fs->super->s_raid_stride;
+        // free blocks check 
+        // printf("Group 0 current free block %d.\n", ext2fs_bg_free_blocks_count(fs, 0));
+        
 	if (!quiet)
 		printf("%s", _("Allocating group tables: "));
 	if (ext2fs_has_feature_flex_bg(fs->super) &&

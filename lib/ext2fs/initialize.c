@@ -561,15 +561,17 @@ ipg_retry:
 			ext2fs_bg_itable_unused_set(fs, i, numblocks);
 		}
 		numblocks = ext2fs_reserve_super_and_bgd(fs, i, fs->block_map);
-                printf("ext2fs_initialize --- free blocks of group %d: %d.\n", i, numblocks);
+                // printf("ext2fs_initialize --- free blocks of group %d: %d.\n", i, numblocks);
+                /*
 		if (fs->super->s_log_groups_per_flex)
 			numblocks += 2 + fs->inode_blocks_per_group;
-
+                */
 		free_blocks += numblocks;
 		ext2fs_bg_free_blocks_count_set(fs, i, numblocks);
 		ext2fs_bg_free_inodes_count_set(fs, i, fs->super->s_inodes_per_group);
 		ext2fs_bg_used_dirs_count_set(fs, i, 0);
 		ext2fs_group_desc_csum_set(fs, i);
+                printf("ext2fs_initialize --- free blocks of group %d: %d.\n", i, ext2fs_bg_free_blocks_count(fs, i));
 	}
 	free_blocks &= ~EXT2FS_CLUSTER_MASK(fs);
 	ext2fs_free_blocks_count_set(super, free_blocks);
