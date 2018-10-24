@@ -3235,6 +3235,8 @@ int main (int argc, char *argv[])
 			       journal_blocks);
 			fflush(stdout);
 		}
+                printf("Creating journal (%u blocks): ", journal_blocks);
+                //printf("Internal journal location: %d, number of blocks %d\n.", journal_location, journal_blocks);
 		retval = ext2fs_add_journal_inode2(fs, journal_blocks,
 						   journal_location,
 						   journal_flags);
